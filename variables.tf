@@ -150,8 +150,8 @@ variable "helpernode_tag" {
 
 variable "install_playbook_tag" {
     description = "Set the branch/tag name or commit# for using ocp4-playbooks repo"
-    # Checkout level for https://github.com/ocp-power-automation/ocp4-playbooks which is used for running ocp4 installations steps
-    default = "90c7cc478c8751d0b22c163e101a0d49e15e2e08"
+    # Checkout level for https://github.com/pravin-dsilva/ocp4-playbooks which is used for running ocp4 installations steps
+    default = "6735d4ba5e5cf56c9a2ddb2043c0dcbf7ffcd858"
 }
 
 variable "ansible_extra_options" {
@@ -209,4 +209,33 @@ variable "volume_size" {
     # If storage_type = nfs, a new volume of this size will be attached to the bastion node.
     # Value in GB
     default = "300"
+}
+
+
+################################################
+#Disconnected install parameters
+################################################
+
+variable "ocp_release" {
+    default = "4.4.0-0.nightly-ppc64le-2020-06-02-231523"
+}
+
+variable "product_repo" {
+    default = "openshift-release-dev"
+}
+
+variable "release_name" {
+    default = "ocp-release-nightly"
+}
+
+variable "local_registry" {
+    default = ""
+}
+
+variable "local_registry_json" {
+    default = "/root/pull-secret.txt"
+}
+
+variable "local_repository" {
+    default = "ocp4/openshift44"
 }

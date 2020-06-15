@@ -35,7 +35,7 @@ module "prepare" {
     source                          = "./modules/1_prepare"
 
     cluster_domain                  = var.cluster_domain
-    cluster_id                      = "${random_id.label.hex}"
+    cluster_id                      = "test"
     bastion                         = var.bastion
     bastion_image                   = var.bastion_image
     rhel_username                   = var.rhel_username
@@ -57,7 +57,7 @@ module "nodes" {
 
     bastion_ip                      = module.prepare.bastion_ip
     cluster_domain                  = var.cluster_domain
-    cluster_id                      = "${random_id.label.hex}"
+    cluster_id                      = "test"
     bootstrap                       = var.bootstrap
     master                          = var.master
     worker                          = var.worker
@@ -71,7 +71,7 @@ module "install" {
     source                          = "./modules/5_install"
 
     cluster_domain                  = var.cluster_domain
-    cluster_id                      = "${random_id.label.hex}"
+    cluster_id                      = "test"
     dns_forwarders                  = var.dns_forwarders
     gateway_ip                      = cidrhost(var.network_cidr,1)
     cidr                            = var.network_cidr
@@ -97,4 +97,10 @@ module "install" {
     install_playbook_tag            = var.install_playbook_tag
     log_level                       = var.installer_log_level
     ansible_extra_options           = var.ansible_extra_options
+    ocp_release                     = var.ocp_release
+    product_repo                    = var.product_repo
+    release_name                    = var.release_name
+    local_registry                  = var.local_registry
+    local_registry_json             = var.local_registry_json
+    local_repository                = var.local_repository
 }

@@ -19,6 +19,16 @@
 ################################################################
 
 locals {
+    offline_vars = {
+        cluster_domain      = var.cluster_domain
+        cluster_id          = var.cluster_id
+        ocp_release         = var.ocp_release
+        product_repo        = var.product_repo
+        release_name        = var.release_name
+        local_registry      = var.local_registry
+        local_registry_json = var.local_registry_json
+        local_repository    = var.local_repository
+    }
     helpernode_vars = {
         cluster_domain  = var.cluster_domain
         cluster_id      = var.cluster_id
@@ -69,8 +79,12 @@ locals {
         storage_type            = var.storage_type
         log_level               = var.log_level
         release_image_override  = var.release_image_override
+        local_repository        = var.local_repository
+        ocp_release             = var.ocp_release
     }
 }
+
+
 
 resource "null_resource" "config" {
     connection {
@@ -103,8 +117,31 @@ resource "null_resource" "config" {
     }
 }
 
+resource "null_resource" "offline" {
+depends_on = [null_resource.config]
+    connection {
+        type        = "ssh"
+        user        = var.rhel_username
+        host        = var.bastion_ip
+        private_key = var.private_key
+        agent       = var.ssh_agent
+        timeout     = "15m"
+        bastion_host = var.jump_host
+    }
+    provisioner "file" {
+        content     = templatefile("${path.module}/templates/offline-install.sh", local.offline_vars)
+        destination = "~/offline-install.sh"
+    }
+    provisioner "remote-exec" {
+        inline = [
+            "sh offline-install.sh"
+        ]
+    }
+
+}
+
 resource "null_resource" "install" {
-    depends_on = [null_resource.config]
+    depends_on = [null_resource.offline]
 
     connection {
         type        = "ssh"
@@ -120,8 +157,8 @@ resource "null_resource" "install" {
         inline = [
             "rm -rf ocp4-playbooks",
             "echo 'Cloning into ocp4-playbooks...'",
-            "git clone https://github.com/ocp-power-automation/ocp4-playbooks --quiet",
-            "cd ocp4-playbooks && git checkout ${var.install_playbook_tag}"
+            "git clone https://github.com/pravin-dsilva/ocp4-playbooks --quiet",
+            "cd ocp4-playbooks"
         ]
     }
     provisioner "file" {
@@ -132,6 +169,7 @@ resource "null_resource" "install" {
         content     = templatefile("${path.module}/templates/install_vars.yaml", local.install_vars)
         destination = "~/ocp4-playbooks/install_vars.yaml"
     }
+
     provisioner "remote-exec" {
         inline = [
             "echo 'Running ocp install playbook...'",

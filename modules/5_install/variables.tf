@@ -61,3 +61,16 @@ variable "log_level" {}
 
 variable "ansible_extra_options" {}
 
+
+###### offline params
+variable "ocp_release" {}
+
+variable "product_repo" {}
+
+variable "release_name" {}
+
+variable "local_registry" {}
+
+variable "local_registry_json" {}
+
+variable "local_repository" {}

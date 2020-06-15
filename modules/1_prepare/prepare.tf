@@ -175,6 +175,49 @@ EOF
         ]
     }
 }
+locals {
+    pull_secret_config = {
+        cluster_id = var.cluster_id
+        cluster_domain = var.cluster_domain
+    }
+}
+
+resource "null_resource" "configure_iptables" {
+depends_on = [null_resource.bastion_init]
+    connection {
+        type        = "ssh"
+        user        = var.rhel_username
+        host        = var.host_address
+        private_key = var.private_key
+        agent       = var.ssh_agent
+        timeout     = "15m"
+    }
+    provisioner "remote-exec" {
+        inline = [ 
+        "for i in $(iptables -L --line-numbers | grep 192.168.88.0/24 | awk '{print $1}'); do iptables -D FORWARD $i ; done;  iptables -I FORWARD 1 --protocol all --dst 192.168.88.2 --jump ACCEPT -m conntrack --ctstate RELATED,ESTABLISHED"
+        ]
+    }
+}
+
+resource "null_resource" "update_pullsecret" {
+depends_on = [null_resource.bastion_init]
+    connection {
+        type        = "ssh"
+        user        = var.rhel_username
+        host        = local.bastion_ip
+        private_key = var.private_key
+        agent       = var.ssh_agent
+        timeout     = "15m"
+        bastion_host = var.host_address
+    }
+    provisioner "local-exec" {
+        command = "sed -i \"s/bastion-host/${var.cluster_id}-bastion.${var.cluster_domain}/g\" ${path.cwd}/data/pull-secret.txt"
+    }
+    provisioner "file" {
+        source = "${path.cwd}/data/pull-secret.txt"
+        destination = "/root/pull-secret.txt"
+    }
+}
 
 locals {
     disk_config = {
@@ -184,7 +227,7 @@ locals {
 }
 
 resource "null_resource" "setup_nfs_disk" {
-    depends_on  = [null_resource.bastion_init]
+    depends_on  = [null_resource.update_pullsecret]
     count       = var.storage_type == "nfs" ? 1 : 0
     connection {
         type        = "ssh"
